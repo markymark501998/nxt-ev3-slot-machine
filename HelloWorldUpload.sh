@@ -1,0 +1,1 @@
+nxjupload -r HelloWorld.nxj
