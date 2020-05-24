@@ -101,6 +101,18 @@ public class BTCommunicator extends Thread {
 				
 				if (!messageQueue1.empty()) {
 					sm = messageQueue1.pop();
+					
+					output1.writeInt(sm.length);
+					
+					for (int i = 0; i < sm.length; i++) {
+						output1.writeChar(sm.message[i]);
+						
+						
+					}
+					
+					for (char c:sm.message) {
+						
+					}
 				}
 				
 				if (!messageQueue2.empty()) {
