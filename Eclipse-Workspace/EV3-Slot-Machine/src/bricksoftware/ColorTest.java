@@ -36,7 +36,7 @@ public class ColorTest {
 		//NXTColorSensor cmps = new NXTColorSensor(s1);
 		//NXTTouchSensor touchSensor = new NXTTouchSensor(s1);
 		NXTLightSensor lightSensor = new NXTLightSensor(s2);
-		RFIDSensor rfid = new RFIDSensor(s3);
+		//RFIDSensor rfid = new RFIDSensor(s3);
 		//rfid.startFirmware();
 		//rfid.wakeUp();
 		//rfid.getStatus();
@@ -109,7 +109,8 @@ public class ColorTest {
 		
 		//cmps.close();
 		//touchSensor.close();
-		rfid.close();
+		lightSensor.close();
+		//rfid.close();
 		
 		
 		/*
