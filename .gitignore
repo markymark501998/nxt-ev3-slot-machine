@@ -1,3 +1,7 @@
 *.class
 *.nxj
 *.nxd
+samples/samples/.project
+samples/pcsamples/.project
+samples/org.lejos.example/.project
+samples/org.lejos.pcexample/.project
