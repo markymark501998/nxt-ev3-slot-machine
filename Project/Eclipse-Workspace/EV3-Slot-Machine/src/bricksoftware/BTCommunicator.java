@@ -16,6 +16,8 @@ public class BTCommunicator extends Thread {
 	public Queue<StackMessage> messageQueue1 = new LinkedList<StackMessage>();
 	public Queue<StackMessage> messageQueue2 = new LinkedList<StackMessage>();
 	
+	public Queue<StackMessage> receivingQueue = new LinkedList<StackMessage>();
+	
 	DataInputStream input1;
 	DataOutputStream output1;
 	
@@ -55,12 +57,12 @@ public class BTCommunicator extends Thread {
 			if(verbose)
 				System.out.println("Attempt 1: " + NXT1);
 			
-			connection1 = connector1.connect(NXT1, NXTConnection.PACKET);
+			connection1 = connector1.connect(NXT1, NXTConnection.RAW);
 			
 			attemptNum = 0;
 			while (connection1 == null && attemptNum < maxAttempts) {
 				connector1 = Bluetooth.getNXTCommConnector();
-				connection1 = connector1.connect(NXT1, NXTConnection.PACKET);
+				connection1 = connector1.connect(NXT1, NXTConnection.RAW);
 				
 				if(verbose)
 					System.out.println("Attempt " + (attemptNum + 1) + ": " + NXT1);
@@ -88,7 +90,7 @@ public class BTCommunicator extends Thread {
 			attemptNum = 0;
 			while (connection2 == null && attemptNum < maxAttempts) {
 				connector2 = Bluetooth.getNXTCommConnector();
-				connection2 = connector2.connect(NXT2, NXTConnection.PACKET);
+				connection2 = connector2.connect(NXT2, NXTConnection.RAW);
 				
 				if(verbose)
 					System.out.println("Attempt " + (attemptNum + 1) + ": " + NXT2);
@@ -136,14 +138,19 @@ public class BTCommunicator extends Thread {
 		if (verbose)
 			System.out.println("Starting Thread...");
 		
+		int counter = 0;
+		
 		try {
 			while (!killComms) {
 				//Communication Cycle Loop
 				communicating = true;
+				counter++;
+				
 				if (verbose)
-					System.out.println("Starting Comms...");
+					System.out.println("Starting Comms..." + counter);
 				
 				StackMessage sm = new StackMessage();
+				int responseCode = 0;
 				
 				while (!messageQueue1.isEmpty()) {
 					sm = messageQueue1.remove();
@@ -151,11 +158,15 @@ public class BTCommunicator extends Thread {
 					output1.writeInt(sm.length);
 					
 					for (int i = 0; i < sm.length; i++) {
-						int charRep = (int)sm.message.charAt(i);
+						int charRep = sm.message.charAt(i);
 						
 						output1.writeChar(charRep);
-						output1.flush();						
-					}
+						output1.flush();
+					}	
+					
+					responseCode = input1.readInt();
+					if (verbose || 1 == 1)
+						System.out.println("Response Code: " + responseCode);
 				}
 				
 				while (!messageQueue2.isEmpty()) {
@@ -164,13 +175,73 @@ public class BTCommunicator extends Thread {
 					output2.writeInt(sm.length);
 					
 					for (int i = 0; i < sm.length; i++) {
-						int charRep = (int)sm.message.charAt(i);
+						int charRep = sm.message.charAt(i);
 						
 						output2.writeChar(charRep);
-						output2.flush();						
+						output2.flush();	
 					}
+					
+					responseCode = input2.readInt();
+					if (verbose || 1 == 1)
+						System.out.println("Response Code: " + responseCode);
+				}
+				/*
+				while (true) {
+					try{						
+						
+						//if(input1.available() < 1) {
+						//	break;
+                        //} else if (verbose) {
+    					//	System.out.println("Available:" + input1.available());
+                        //}
+                        
+                        int length = input1.readInt();
+                        System.out.println("L:" + length);
+                        
+                        String message = "";
+    
+                        for (int i = 0; i < length; i++) {
+                            char newChar = input1.readChar();
+                            
+                            System.out.println(newChar + ":" + (int)newChar);
+                            
+                            message = message + newChar;
+                        }
+    
+                        System.out.println("Message1[" + length + "]: " + message);
+                        receivingQueue.add(new StackMessage(length, message));
+                        
+                        break;
+                    } catch (EOFException e) {
+                        
+                    }
 				}
 				
+				while (true) {
+					try{
+                        if(input2.available() < 1) {
+                            break;
+                        } else {
+                        	System.out.println("Available:" + input2.available());
+                        }
+                        
+                        int length = input2.readInt();
+                        System.out.println("L:" + length);
+                        
+                        String message = "";
+    
+                        for (int i = 0; i < length; i++) {
+                            char newChar = input2.readChar();
+                            message = message + newChar;
+                        }
+    
+                        System.out.println("Message2[" + length + "]: " + message);
+                        receivingQueue.add(new StackMessage(length, message));
+                    } catch (EOFException e) {
+                        
+                    }
+				}
+				*/
 				communicating = false;
 				if (verbose)
 					System.out.println("Ending Comms...");
@@ -186,7 +257,7 @@ public class BTCommunicator extends Thread {
 			System.out.println("Exiting Thread...");
 	}
 	
-	public void StopCommunicationsCycle() throws IOException {
+	public void StopCommunicationsCycle() {
 		try {
 			if (communicating) {
 				while (communicating) {

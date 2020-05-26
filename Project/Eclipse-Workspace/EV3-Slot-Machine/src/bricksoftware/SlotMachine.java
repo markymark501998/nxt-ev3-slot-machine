@@ -5,9 +5,10 @@ import java.io.IOException;
 import lejos.hardware.Button;
 import lejos.utility.Delay;
 
-public class TestBTStack {
+public class SlotMachine {
+
 	public static void main(String[] args) {
-		BTCommunicator btStack = new BTCommunicator(true, 4000);
+		BTCommunicator btStack = new BTCommunicator(false, 50);
 		boolean stackStarted = btStack.StartCommunicationsCycle();
 		
 		int messageCounter = 0;

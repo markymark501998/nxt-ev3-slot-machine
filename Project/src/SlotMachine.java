@@ -2,6 +2,9 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
+import java.util.Queue;
+import java.util.LinkedList;
+import java.util.Random;
 
 import lejos.nxt.Button;
 import lejos.nxt.comm.Bluetooth;
@@ -9,12 +12,12 @@ import lejos.nxt.comm.NXTCommConnector;
 import lejos.nxt.comm.NXTConnection;
 import lejos.util.Delay;
 
-public class TestBTStack {
+public class SlotMachine {
     public static void main(String[] args) throws Exception
     {
         int messageCounter = 0;
 
-        BTCommunicatorReceiver btStack = new BTCommunicatorReceiver(true, 4000);
+        BTCommunicatorReceiver btStack = new BTCommunicatorReceiver(false, 50);
         boolean receiverStarted = btStack.StartCommunicationsCycle();
 
         while(true && receiverStarted) {
@@ -25,6 +28,12 @@ public class TestBTStack {
                     System.out.println("Restarting Cycle");
 					btStack.StartCommunicationsCycle();
                 }
+            }
+
+            if (buttonId == Button.ID_LEFT) {
+                System.out.println("Queuing Message...");
+                btStack.CreateMessageQueue("MessageForEV3" + messageCounter);
+                messageCounter++;
             }
             
             if (buttonId == Button.ID_ESCAPE) {
@@ -41,11 +50,15 @@ class BTCommunicatorReceiver extends Thread {
 	private int INTERVAL = 50;
     private int ERROR_DELAY = 15000;
     private int TIMEOUT_TIME = 120000;
+
+    Random rand = new Random();
     
     DataInputStream input;
     DataOutputStream output;
 
     NXTConnection connection;
+    public Queue<StackMessage> messageQueue = new Queue<StackMessage>();
+    public Queue<StackMessage> receivingQueue = new Queue<StackMessage>();
     
     private boolean communicating = false;
 	public boolean killComms = false;
@@ -69,7 +82,7 @@ class BTCommunicatorReceiver extends Thread {
         if (verbose) 
             System.out.println("Waiting for Connection...");
 
-        connection = connector.waitForConnection(TIMEOUT_TIME, NXTConnection.PACKET);
+        connection = connector.waitForConnection(TIMEOUT_TIME, NXTConnection.RAW);
 
         if (connection != null) {
             System.out.println("Connected!");
@@ -102,7 +115,7 @@ class BTCommunicatorReceiver extends Thread {
 				communicating = true;
 				if (verbose)
                     System.out.println("Starting Comms...");
-                    
+                                    
                 while(true) {
                     try{
                         if(input.available() < 1) {
@@ -116,8 +129,14 @@ class BTCommunicatorReceiver extends Thread {
                             char newChar = input.readChar();
                             message = message + newChar;
                         }
-    
+
+                        int responseCode = rand.nextInt(1000);
+                        System.out.println("Response Code: " + responseCode);
+                        output.writeInt(responseCode);
+                        output.flush();
+
                         System.out.println("Message[" + length + "]: " + message);
+                        receivingQueue.push(new StackMessage(length, message));
                     } catch (EOFException e) {
                         
                     }
@@ -160,4 +179,23 @@ class BTCommunicatorReceiver extends Thread {
 			return;
         }        
     }
+
+    public void CreateMessageQueue(String message) {
+		StackMessage sm = new StackMessage(message.length(), message);
+		messageQueue.push(sm);
+	}
+}
+
+class StackMessage {
+	public int length;
+	public String message;
+	
+	public StackMessage() {
+		
+	}
+	
+	public StackMessage(int messageLength, String messageText) {
+		length = messageLength;
+		message = messageText;
+	}
 }

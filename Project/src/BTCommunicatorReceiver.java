@@ -1,3 +1,14 @@
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.EOFException;
+import java.io.IOException;
+
+import lejos.nxt.Button;
+import lejos.nxt.comm.Bluetooth;
+import lejos.nxt.comm.NXTCommConnector;
+import lejos.nxt.comm.NXTConnection;
+import lejos.util.Delay;
+
 class BTCommunicatorReceiver extends Thread {
     private boolean verbose = false;
 	private int INTERVAL = 50;
