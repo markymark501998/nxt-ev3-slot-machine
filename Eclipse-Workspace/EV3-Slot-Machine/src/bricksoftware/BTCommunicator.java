@@ -12,11 +12,12 @@ public class BTCommunicator extends Thread {
 	private boolean verbose = false;
 	private int INTERVAL = 50;
 	private int ERROR_DELAY = 15000;
+	private boolean printResponseCodes = false;
 	
 	public Queue<StackMessage> messageQueue1 = new LinkedList<StackMessage>();
 	public Queue<StackMessage> messageQueue2 = new LinkedList<StackMessage>();
 	
-	public Queue<StackMessage> receivingQueue = new LinkedList<StackMessage>();
+	public Queue<OpCodeMessage> receivingQueue = new LinkedList<OpCodeMessage>();
 	
 	DataInputStream input1;
 	DataOutputStream output1;
@@ -32,7 +33,11 @@ public class BTCommunicator extends Thread {
 	
 	private Thread t;
 	
-	
+	public BTCommunicator(boolean verbose, int interval, boolean printResponseCodes) {
+		this.verbose = verbose;
+		this.INTERVAL = interval;
+		this.printResponseCodes = printResponseCodes;
+	}
 	
 	public BTCommunicator(boolean verbose, int interval) {
 		this.verbose = verbose;
@@ -56,8 +61,6 @@ public class BTCommunicator extends Thread {
 			
 			if(verbose)
 				System.out.println("Attempt 1: " + NXT1);
-			
-			connection1 = connector1.connect(NXT1, NXTConnection.RAW);
 			
 			attemptNum = 0;
 			while (connection1 == null && attemptNum < maxAttempts) {
@@ -152,6 +155,11 @@ public class BTCommunicator extends Thread {
 				StackMessage sm = new StackMessage();
 				int responseCode = 0;
 				
+				if (messageQueue1.isEmpty()) {
+					String noCommand = "NoCommand";
+					messageQueue1.add(new StackMessage(noCommand.length(), noCommand));
+				}
+				
 				while (!messageQueue1.isEmpty()) {
 					sm = messageQueue1.remove();
 					
@@ -165,8 +173,15 @@ public class BTCommunicator extends Thread {
 					}	
 					
 					responseCode = input1.readInt();
-					if (verbose || 1 == 1)
+					receivingQueue.add(new OpCodeMessage(responseCode));
+					
+					if (printResponseCodes && responseCode != 0)
 						System.out.println("Response Code: " + responseCode);
+				}
+				
+				if (messageQueue2.isEmpty()) {
+					String noCommand = "NoCommand";
+					messageQueue2.add(new StackMessage(noCommand.length(), noCommand));
 				}
 				
 				while (!messageQueue2.isEmpty()) {
@@ -182,9 +197,12 @@ public class BTCommunicator extends Thread {
 					}
 					
 					responseCode = input2.readInt();
-					if (verbose || 1 == 1)
+					receivingQueue.add(new OpCodeMessage(responseCode));
+					
+					if (printResponseCodes && responseCode != 0)
 						System.out.println("Response Code: " + responseCode);
 				}
+				
 				/*
 				while (true) {
 					try{						
@@ -242,6 +260,7 @@ public class BTCommunicator extends Thread {
                     }
 				}
 				*/
+				
 				communicating = false;
 				if (verbose)
 					System.out.println("Ending Comms...");

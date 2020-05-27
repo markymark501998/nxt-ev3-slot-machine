@@ -8,7 +8,7 @@ import lejos.utility.Delay;
 public class SlotMachine {
 
 	public static void main(String[] args) {
-		BTCommunicator btStack = new BTCommunicator(false, 50);
+		BTCommunicator btStack = new BTCommunicator(false, 75, true);
 		boolean stackStarted = btStack.StartCommunicationsCycle();
 		
 		int messageCounter = 0;
