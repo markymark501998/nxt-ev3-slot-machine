@@ -173,10 +173,13 @@ public class BTCommunicator extends Thread {
 					}	
 					
 					responseCode = input1.readInt();
-					receivingQueue.add(new OpCodeMessage(responseCode));
 					
-					if (printResponseCodes && responseCode != 0)
-						System.out.println("Response Code: " + responseCode);
+					if (responseCode != 0) {
+						receivingQueue.add(new OpCodeMessage(responseCode));
+						
+						if (printResponseCodes)
+							System.out.println("RC: " + responseCode);
+					}						
 				}
 				
 				if (messageQueue2.isEmpty()) {
@@ -197,10 +200,13 @@ public class BTCommunicator extends Thread {
 					}
 					
 					responseCode = input2.readInt();
-					receivingQueue.add(new OpCodeMessage(responseCode));
-					
-					if (printResponseCodes && responseCode != 0)
-						System.out.println("Response Code: " + responseCode);
+
+					if (responseCode != 0) {
+						receivingQueue.add(new OpCodeMessage(responseCode));
+						
+						if (printResponseCodes)
+							System.out.println("RC: " + responseCode);
+					}
 				}
 				
 				/*
@@ -278,6 +284,11 @@ public class BTCommunicator extends Thread {
 	
 	public void StopCommunicationsCycle() {
 		try {
+			CreateMessageQueue1("shutdown");
+			CreateMessageQueue2("shutdown");
+			
+			Delay.msDelay(INTERVAL * 3);
+			
 			if (communicating) {
 				while (communicating) {
 					

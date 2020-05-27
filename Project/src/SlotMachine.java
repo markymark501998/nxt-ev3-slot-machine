@@ -4,9 +4,14 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.util.Queue;
 import java.util.LinkedList;
+import java.lang.String;
 
 import lejos.nxt.TouchSensor;
-
+import lejos.nxt.LightSensor;
+import lejos.nxt.NXTRegulatedMotor;
+import lejos.nxt.SensorPort;
+import lejos.nxt.Motor;
+import lejos.nxt.MotorPort;
 import lejos.nxt.Button;
 import lejos.nxt.comm.Bluetooth;
 import lejos.nxt.comm.NXTCommConnector;
@@ -16,22 +21,48 @@ import lejos.util.Delay;
 public class SlotMachine {
     public static void main(String[] args) throws Exception
     {
+        float coinSensorThreshold = 0.34f;
+        int holdButtonDelay = 225;
+        
         BTCommunicatorReceiver btStack = new BTCommunicatorReceiver(false, 50, true);
         boolean receiverStarted = btStack.StartCommunicationsCycle();
+        StackMessage sm;
+        int buttonId;
+        boolean printMotorCommands = false;
+
+        String brickMode = "na"; 
+        String motorCommand = "";
+        String[] commands;
+
+        int aDegrees;
+        int bDegrees;
+        int cDegrees;
+        int motorSpeed = 300;
+
+        NXTRegulatedMotor MotorA = null;
+        NXTRegulatedMotor MotorB = null;
+        NXTRegulatedMotor MotorC = null;
+
+        TouchSensor touchSensor1 = null;
+        TouchSensor touchSensor2 = null;
+        TouchSensor touchSensor3 = null;
+
+        LightSensor lightSensor = null;
 
         while(true && receiverStarted) {
-            if (Button.readButtons() == Button.ID_RIGHT) {
-				if (btStack.killComms) {
-                    System.out.println("Restarting Cycle");
-					btStack.StartCommunicationsCycle();
-                }
+            buttonId = Button.readButtons();
+
+            //System.out.println("Mem:" + System.getRuntime().freeMemory());
+            
+            if (buttonId == Button.ID_RIGHT) {
+				
 
                 while (Button.RIGHT.isDown()) {
 
                 }
             }
 
-            if (Button.readButtons() == Button.ID_LEFT) {
+            if (buttonId == Button.ID_LEFT) {
                 System.out.println("Queuing Message...");
                 btStack.CreateMessageQueue(1);
 
@@ -40,15 +71,189 @@ public class SlotMachine {
                 }
             }
             
-            if (Button.readButtons() == Button.ID_ESCAPE) {
+            if (buttonId == Button.ID_ESCAPE) {
                 System.out.println("Exiting");
                 btStack.StopCommunicationsCycle();
-                
+
                 while (Button.ESCAPE.isDown()) {
 
                 }
 
                 break;
+            }
+
+            if (!btStack.receivingQueue.isEmpty()) {
+                sm = (StackMessage)btStack.receivingQueue.pop();
+
+                if (sm.message.equals("shutdown")) {
+                    System.out.println("Exiting");
+                    btStack.StopCommunicationsCycle();
+                    break;
+                }
+
+                if (sm.message.equals("brick1")) {
+                    brickMode = sm.message;
+
+                    MotorA = new NXTRegulatedMotor(MotorPort.A);
+                    MotorB = new NXTRegulatedMotor(MotorPort.B);
+
+                    //touchSensor1 = new TouchSensor(SensorPort.S1);
+                    touchSensor2 = new TouchSensor(SensorPort.S2);
+
+                    lightSensor = new LightSensor(SensorPort.S3);
+                }
+
+                if (sm.message.equals("brick2")) {
+                    brickMode = sm.message;
+
+                    MotorA = new NXTRegulatedMotor(MotorPort.A);
+                    MotorB = new NXTRegulatedMotor(MotorPort.B);
+                    MotorC = new NXTRegulatedMotor(MotorPort.C);
+
+                    touchSensor1 = new TouchSensor(SensorPort.S1);
+                    touchSensor2 = new TouchSensor(SensorPort.S2);
+                    touchSensor3 = new TouchSensor(SensorPort.S3);
+                }
+
+                //Motor Controls
+                if (sm.message.charAt(0) == '!') {
+                    switch(brickMode) {
+                        case "brick1":
+        
+                            motorCommand = sm.message.substring(1);
+                            //commands = motorCommand.split("[,]+");
+                            commands = StringSplitter.splitMotorCommandString(3, motorCommand, ',');
+
+                            if (printMotorCommands) {
+                                System.out.println(commands[0]);
+                                System.out.println(commands[1]);
+                                System.out.println(commands[2]);
+
+                                System.out.println(commands[0].substring(2));
+                                System.out.println(commands[1].substring(2));
+                                System.out.println(commands[2].substring(2));
+                            }
+
+                            aDegrees = Integer.parseInt(commands[0].substring(2));
+                            bDegrees = Integer.parseInt(commands[1].substring(2));
+                            
+                            MotorA.setSpeed(motorSpeed);
+                            MotorA.resetTachoCount();
+                            MotorB.setSpeed(motorSpeed);
+                            MotorB.resetTachoCount();
+
+                            MotorA.rotateTo(aDegrees, true);
+                            MotorB.rotateTo(bDegrees, true);
+
+                            MotorA.waitComplete();
+                            MotorB.waitComplete();
+
+                            MotorA.flt(true);
+                            MotorB.flt(true);
+        
+                            break;
+        
+                        case "brick2":
+        
+                            motorCommand = sm.message.substring(1);
+                            //commands = motorCommand.split("[,]+");
+                            commands = StringSplitter.splitMotorCommandString(3, motorCommand, ',');
+
+                            if (printMotorCommands) {
+                                System.out.println(commands[0]);
+                                System.out.println(commands[1]);
+                                System.out.println(commands[2]);
+
+                                System.out.println(commands[0].substring(2));
+                                System.out.println(commands[1].substring(2));
+                                System.out.println(commands[2].substring(2));
+                            }
+
+                            aDegrees = Integer.parseInt(commands[0].substring(2));
+                            bDegrees = Integer.parseInt(commands[1].substring(2));
+                            cDegrees = Integer.parseInt(commands[2].substring(2));
+
+                            MotorA.setSpeed(motorSpeed);
+                            MotorA.resetTachoCount();
+                            MotorB.setSpeed(motorSpeed);
+                            MotorB.resetTachoCount();
+                            MotorC.setSpeed(motorSpeed);
+                            MotorC.resetTachoCount();
+
+                            MotorA.rotateTo(aDegrees, true);
+                            MotorB.rotateTo(bDegrees, true);
+                            MotorC.rotateTo(cDegrees, true);
+
+                            MotorA.waitComplete();
+                            MotorB.waitComplete();
+                            MotorC.waitComplete();
+
+                            MotorA.flt(true);
+                            MotorB.flt(true);
+                            MotorC.flt(true);
+        
+                            break;
+        
+                        default:
+        
+        
+        
+                            break;
+                    }
+                }
+            }
+
+            //Sensor Readings
+            switch(brickMode) {
+                case "brick1":
+                    /*
+                    if (touchSensor2.isPressed()) {
+                        System.out.println("Slots1_2 is Pressed");
+                        btStack.CreateMessageQueue(2);
+
+                        while (touchSensor2.isPressed()) {
+
+                        }
+
+                        Delay.msDelay(holdButtonDelay);
+                        System.out.println("Released 1_2");
+                    }
+                    */
+                    if (touchSensor2.isPressed()) {
+                        btStack.CreateMessageQueue(5);
+                        while (touchSensor2.isPressed()) {  }
+                        Delay.msDelay(holdButtonDelay);
+                    }
+                    
+                    break;
+
+                case "brick2":
+
+                    if (touchSensor1.isPressed()) {
+                        btStack.CreateMessageQueue(1);
+                        while (touchSensor1.isPressed()) {  }
+                        Delay.msDelay(holdButtonDelay);
+                    }
+
+                    if (touchSensor2.isPressed()) {
+                        btStack.CreateMessageQueue(2);
+                        while (touchSensor2.isPressed()) {  }
+                        Delay.msDelay(holdButtonDelay);
+                    }
+
+                    if (touchSensor3.isPressed()) {
+                        btStack.CreateMessageQueue(3);
+                        while (touchSensor3.isPressed()) {  }
+                        Delay.msDelay(holdButtonDelay);
+                    }
+
+                    break;
+
+                default:
+
+
+
+                    break;
             }
         }
     }
@@ -63,6 +268,7 @@ class BTCommunicatorReceiver extends Thread {
     
     DataInputStream input;
     DataOutputStream output;
+    NXTCommConnector connector;
 
     NXTConnection connection;
     public Queue<OpCodeMessage> messageQueue = new Queue<OpCodeMessage>();
@@ -91,7 +297,7 @@ class BTCommunicatorReceiver extends Thread {
     public boolean StartCommunicationsCycle() {
         killComms = false;
         
-        NXTCommConnector connector = Bluetooth.getConnector();
+        connector = Bluetooth.getConnector();
 
         if (verbose) 
             System.out.println("Waiting for Connection...");
@@ -122,6 +328,12 @@ class BTCommunicatorReceiver extends Thread {
     public void run() {
         if (verbose)
             System.out.println("Starting Thread...");
+
+        int responseCode = 0;
+        int length;
+        char newChar;
+        String message = "";
+        OpCodeMessage om;
             
         try {
             while (!killComms) {
@@ -136,17 +348,17 @@ class BTCommunicatorReceiver extends Thread {
                             break;
                         }
                         
-                        int length = input.readInt();
-                        String message = "";
+                        length = input.readInt();
+                        message = "";
     
                         for (int i = 0; i < length; i++) {
-                            char newChar = input.readChar();
+                            newChar = input.readChar();
                             message = message + newChar;
                         }
 
-                        int responseCode = 0;
+                        responseCode = 115;
                         if(!messageQueue.isEmpty()) {
-                            OpCodeMessage om = (OpCodeMessage)messageQueue.pop();
+                            om = (OpCodeMessage)messageQueue.pop();
                             responseCode = om.opcode;
                         }
                         
@@ -157,9 +369,11 @@ class BTCommunicatorReceiver extends Thread {
                         output.flush();
                         
                         if(!message.equals("NoCommand") && printResponseCodes)
-                            System.out.println("M[" + length + "]: " + message);
+                            System.out.println("M:" + message);
 
-                        receivingQueue.push(new StackMessage(length, message));
+                        if(!message.equals("NoCommand")) {
+                            receivingQueue.push(new StackMessage(length, message));
+                        }                            
                     } catch (EOFException e) {
                         
                     }
@@ -232,4 +446,27 @@ class OpCodeMessage {
 	public OpCodeMessage(int opcode) {
 		this.opcode = opcode;
 	}
+}
+
+class StringSplitter {
+    public static String[] splitMotorCommandString(int size, String input, char splitChar) {
+        String[] result = new String[size];
+        String tempString = "";
+        int counter = 0;
+
+        for (int i = 0; i < input.length(); i++) {
+            if (input.charAt(i) == splitChar) {
+                result[counter] = tempString;
+                tempString = "";
+                counter++;
+            } else if ((i + 1) == input.length()) {
+                tempString = tempString + input.charAt(i);
+                result[counter] = tempString;
+            } else {
+                tempString = tempString + input.charAt(i);
+            }
+        }
+
+        return result;
+    }
 }
