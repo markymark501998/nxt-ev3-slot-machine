@@ -19,16 +19,27 @@ import lejos.nxt.comm.NXTConnection;
 import lejos.util.Delay;
 
 public class SlotMachine {
+    private static int ERROR_DELAY = 15000;
+
     public static void main(String[] args) throws Exception
     {
-        float coinSensorThreshold = 0.34f;
-        int holdButtonDelay = 225;
+        //================================================================================================================
+        //                                                   Variables
+        //================================================================================================================        
         
-        BTCommunicatorReceiver btStack = new BTCommunicatorReceiver(false, 50, true);
-        boolean receiverStarted = btStack.StartCommunicationsCycle();
+        //Configurables
+        //--------------------------------------------------
+        int coinSensorThreshold = 30;
+        int coinDelay = 400;
+
+        int holdButtonDelay = 225;
+        boolean printMotorCommands = false;  
+        int motorSpeed = 350;   
+
+        //Local Variables
+        //--------------------------------------------------
         StackMessage sm;
-        int buttonId;
-        boolean printMotorCommands = false;
+        int buttonId;        
 
         String brickMode = "na"; 
         String motorCommand = "";
@@ -37,7 +48,6 @@ public class SlotMachine {
         int aDegrees;
         int bDegrees;
         int cDegrees;
-        int motorSpeed = 300;
 
         NXTRegulatedMotor MotorA = null;
         NXTRegulatedMotor MotorB = null;
@@ -48,6 +58,18 @@ public class SlotMachine {
         TouchSensor touchSensor3 = null;
 
         LightSensor lightSensor = null;
+        int lightVal = 0;
+
+        //================================================================================================================
+        //                                                 Start Main Thread
+        //================================================================================================================
+        BTCommunicatorReceiver btStack = new BTCommunicatorReceiver(false, 50, false);
+        boolean receiverStarted = btStack.StartCommunicationsCycle();
+
+        if (!receiverStarted) {
+            System.out.println("FAILED TO START BTSTACK");
+            Delay.msDelay(ERROR_DELAY);
+        }
 
         while(true && receiverStarted) {
             buttonId = Button.readButtons();
@@ -64,7 +86,7 @@ public class SlotMachine {
 
             if (buttonId == Button.ID_LEFT) {
                 System.out.println("Queuing Message...");
-                btStack.CreateMessageQueue(1);
+                btStack.CreateMessageQueue(0);
 
                 while (Button.LEFT.isDown()) {
 
@@ -100,7 +122,7 @@ public class SlotMachine {
                     //touchSensor1 = new TouchSensor(SensorPort.S1);
                     touchSensor2 = new TouchSensor(SensorPort.S2);
 
-                    lightSensor = new LightSensor(SensorPort.S3);
+                    lightSensor = new LightSensor(SensorPort.S3, true);
                 }
 
                 if (sm.message.equals("brick2")) {
@@ -207,23 +229,25 @@ public class SlotMachine {
             switch(brickMode) {
                 case "brick1":
                     /*
-                    if (touchSensor2.isPressed()) {
-                        System.out.println("Slots1_2 is Pressed");
-                        btStack.CreateMessageQueue(2);
-
-                        while (touchSensor2.isPressed()) {
-
-                        }
-
+                    if (touchSensor1.isPressed()) {
+                        btStack.CreateMessageQueue(4);
+                        while (touchSensor1.isPressed()) { if (Button.ESCAPE.isDown()) break; }
                         Delay.msDelay(holdButtonDelay);
-                        System.out.println("Released 1_2");
                     }
                     */
                     if (touchSensor2.isPressed()) {
                         btStack.CreateMessageQueue(5);
-                        while (touchSensor2.isPressed()) {  }
+                        while (touchSensor2.isPressed()) { if (Button.ESCAPE.isDown()) break; }
                         Delay.msDelay(holdButtonDelay);
                     }
+
+                    lightVal = lightSensor.readValue();
+
+                    if(lightVal > coinSensorThreshold) {
+                        System.out.println("LightVal:" + lightVal);
+                        Delay.msDelay(coinDelay);
+                    }
+                        
                     
                     break;
 
@@ -231,19 +255,19 @@ public class SlotMachine {
 
                     if (touchSensor1.isPressed()) {
                         btStack.CreateMessageQueue(1);
-                        while (touchSensor1.isPressed()) {  }
+                        while (touchSensor1.isPressed()) { if (Button.ESCAPE.isDown()) break; }
                         Delay.msDelay(holdButtonDelay);
                     }
 
                     if (touchSensor2.isPressed()) {
                         btStack.CreateMessageQueue(2);
-                        while (touchSensor2.isPressed()) {  }
+                        while (touchSensor2.isPressed()) { if (Button.ESCAPE.isDown()) break; }
                         Delay.msDelay(holdButtonDelay);
                     }
 
                     if (touchSensor3.isPressed()) {
                         btStack.CreateMessageQueue(3);
-                        while (touchSensor3.isPressed()) {  }
+                        while (touchSensor3.isPressed()) { if (Button.ESCAPE.isDown()) break; }
                         Delay.msDelay(holdButtonDelay);
                     }
 
@@ -362,7 +386,7 @@ class BTCommunicatorReceiver extends Thread {
                             responseCode = om.opcode;
                         }
                         
-                        if (printResponseCodes && responseCode != 0) 
+                        if (printResponseCodes && responseCode != 115) 
                             System.out.println("Response Code: " + responseCode);
 
                         output.writeInt(responseCode);

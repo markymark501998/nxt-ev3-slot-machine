@@ -12,7 +12,7 @@ public class BTCommunicator extends Thread {
 	private boolean verbose = false;
 	private int INTERVAL = 50;
 	private int ERROR_DELAY = 15000;
-	private boolean printResponseCodes = false;
+	public boolean printResponseCodes = false;
 	
 	public Queue<StackMessage> messageQueue1 = new LinkedList<StackMessage>();
 	public Queue<StackMessage> messageQueue2 = new LinkedList<StackMessage>();
@@ -174,7 +174,7 @@ public class BTCommunicator extends Thread {
 					
 					responseCode = input1.readInt();
 					
-					if (responseCode != 0) {
+					if (responseCode != 115) {
 						receivingQueue.add(new OpCodeMessage(responseCode));
 						
 						if (printResponseCodes)
@@ -201,7 +201,7 @@ public class BTCommunicator extends Thread {
 					
 					responseCode = input2.readInt();
 
-					if (responseCode != 0) {
+					if (responseCode != 115) {
 						receivingQueue.add(new OpCodeMessage(responseCode));
 						
 						if (printResponseCodes)
@@ -285,9 +285,8 @@ public class BTCommunicator extends Thread {
 	public void StopCommunicationsCycle() {
 		try {
 			CreateMessageQueue1("shutdown");
-			CreateMessageQueue2("shutdown");
-			
-			Delay.msDelay(INTERVAL * 3);
+			CreateMessageQueue2("shutdown");			
+			Delay.msDelay(INTERVAL * 10);
 			
 			if (communicating) {
 				while (communicating) {
