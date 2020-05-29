@@ -1,19 +1,32 @@
 package bricksoftware;
 
 import java.io.IOException;
+import java.io.File;
 
 import lejos.hardware.Button;
 import lejos.utility.Delay;
 
 import lejos.hardware.motor.EV3LargeRegulatedMotor;
+import lejos.hardware.motor.RCXMotor;
+
 import lejos.hardware.port.MotorPort;
 import lejos.hardware.port.SensorPort;
 import lejos.hardware.sensor.EV3IRSensor;
 import lejos.hardware.sensor.SensorMode;
 
+import lejos.hardware.Sound;
+import lejos.hardware.Sounds;
+
 public class SlotMachine {
 
 	public static void main(String[] args) {
+        //Configurables
+		//---------------------------------------------------------------------------
+		int motorSpeed = 250;  
+        
+        
+        //Local Variables
+        //---------------------------------------------------------------------------
 		BTCommunicator btStack = new BTCommunicator(false, 50, true);
 		boolean stackStarted = btStack.StartCommunicationsCycle();
 		
@@ -24,8 +37,17 @@ public class SlotMachine {
 		EV3IRSensor irSensor = new EV3IRSensor(SensorPort.S2);
 		int chan1, chan2, chan3, chan4;
 		
+		File coinSoundFile = new File("CoinSound1.wav");
+		int soundReturn = 0;		
+		
+		RCXMotor playLight1 = new RCXMotor(MotorPort.A);
+		RCXMotor playLight2 = new RCXMotor(MotorPort.B);
+		EV3LargeRegulatedMotor coinDispenserMotor = new EV3LargeRegulatedMotor(MotorPort.C);
+		
+		playLight1.setPower(100);
+		playLight2.setPower(100);
+		
 		while (true && stackStarted) {
-			//int buttonId = Button.waitForAnyEvent();
 			int buttonId = Button.readButtons();
 			
 			if (buttonId == Button.ID_ESCAPE) {
@@ -77,6 +99,16 @@ public class SlotMachine {
 				}
 			}
 			
+			if (!btStack.receivingQueue.isEmpty()) {
+				OpCodeMessage opcm = btStack.receivingQueue.remove();
+				
+				if (opcm.opcode == 50) {
+					//soundReturn = Sound.playSample(coinSoundFile, 90);
+					//System.out.println("SR:" + soundReturn);
+					System.out.println("Coin Collected");
+				}
+			}
+			
 			chan1 = irSensor.getRemoteCommand(0);
 			chan2 = irSensor.getRemoteCommand(1);
 			chan3 = irSensor.getRemoteCommand(2);
@@ -88,6 +120,22 @@ public class SlotMachine {
 				}
 				
 				System.out.println("1:" + chan1);
+				
+				if (chan1 == 1) {
+					DispenseCoinsV2(coinDispenserMotor, 1, motorSpeed);
+				}
+				
+				if (chan1 == 2) {
+					DispenseCoinsV2(coinDispenserMotor, 2, motorSpeed);
+				}
+				
+				if (chan1 == 3) {
+					DispenseCoinsV2(coinDispenserMotor, 3, motorSpeed);
+				}
+				
+				if (chan1 == 4) {
+					DispenseCoinsV2(coinDispenserMotor, 4, motorSpeed);
+				}
 			}
 			
 			if (chan2 != 0) {
@@ -111,6 +159,11 @@ public class SlotMachine {
 					
 				}
 				
+				if (chan4 == 4) {
+					btStack.StopCommunicationsCycle();
+					break;
+				}
+				
 				System.out.println("4:" + chan4);
 			}
 			
@@ -118,5 +171,29 @@ public class SlotMachine {
 		}
 		
 		irSensor.close();
+		coinDispenserMotor.close();
+		playLight1.close();
+		playLight2.close();
+	}
+	
+	public static void DispenseCoins(EV3LargeRegulatedMotor dispenser, int coins, int motorSpeed) {
+		dispenser.resetTachoCount();
+		dispenser.setSpeed(motorSpeed);
+		dispenser.rotate(360 * coins);
+		dispenser.waitComplete();
+		dispenser.flt();
+	}
+	
+	public static void DispenseCoinsV2(EV3LargeRegulatedMotor dispenser, int coins, int motorSpeed) {
+		for (int i = 0; i < coins; i++) {
+			dispenser.resetTachoCount();
+			dispenser.setSpeed(motorSpeed);
+			dispenser.rotate(112);
+			dispenser.waitComplete();
+			dispenser.resetTachoCount();
+			dispenser.rotate(-112);
+			dispenser.flt();
+			Delay.msDelay(25);
+		}
 	}
 }

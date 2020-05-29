@@ -11,7 +11,7 @@ import java.io.*;
 public class BTCommunicator extends Thread {
 	private boolean verbose = false;
 	private int INTERVAL = 50;
-	private int ERROR_DELAY = 15000;
+	private int ERROR_DELAY = 5000;
 	public boolean printResponseCodes = false;
 	
 	public Queue<StackMessage> messageQueue1 = new LinkedList<StackMessage>();

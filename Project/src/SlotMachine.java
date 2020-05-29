@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.Queue;
 import java.util.LinkedList;
 import java.lang.String;
+import java.io.File;
 
 import lejos.nxt.TouchSensor;
 import lejos.nxt.LightSensor;
@@ -13,6 +14,7 @@ import lejos.nxt.SensorPort;
 import lejos.nxt.Motor;
 import lejos.nxt.MotorPort;
 import lejos.nxt.Button;
+import lejos.nxt.Sound;
 import lejos.nxt.comm.Bluetooth;
 import lejos.nxt.comm.NXTCommConnector;
 import lejos.nxt.comm.NXTConnection;
@@ -59,6 +61,9 @@ public class SlotMachine {
 
         LightSensor lightSensor = null;
         int lightVal = 0;
+
+        File coinSoundFile = new File("CoinSound1.wav");
+        int soundReturn = 0;
 
         //================================================================================================================
         //                                                 Start Main Thread
@@ -119,7 +124,7 @@ public class SlotMachine {
                     MotorA = new NXTRegulatedMotor(MotorPort.A);
                     MotorB = new NXTRegulatedMotor(MotorPort.B);
 
-                    //touchSensor1 = new TouchSensor(SensorPort.S1);
+                    touchSensor1 = new TouchSensor(SensorPort.S1);
                     touchSensor2 = new TouchSensor(SensorPort.S2);
 
                     lightSensor = new LightSensor(SensorPort.S3, true);
@@ -228,13 +233,12 @@ public class SlotMachine {
             //Sensor Readings
             switch(brickMode) {
                 case "brick1":
-                    /*
                     if (touchSensor1.isPressed()) {
                         btStack.CreateMessageQueue(4);
                         while (touchSensor1.isPressed()) { if (Button.ESCAPE.isDown()) break; }
                         Delay.msDelay(holdButtonDelay);
                     }
-                    */
+                    
                     if (touchSensor2.isPressed()) {
                         btStack.CreateMessageQueue(5);
                         while (touchSensor2.isPressed()) { if (Button.ESCAPE.isDown()) break; }
@@ -245,6 +249,10 @@ public class SlotMachine {
 
                     if(lightVal > coinSensorThreshold) {
                         System.out.println("LightVal:" + lightVal);
+                        btStack.CreateMessageQueue(50);
+
+                        soundReturn = Sound.playSample(coinSoundFile, 90);
+					    System.out.println("SR:" + soundReturn);
                         Delay.msDelay(coinDelay);
                     }
                         
