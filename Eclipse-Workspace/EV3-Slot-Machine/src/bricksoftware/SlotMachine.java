@@ -30,6 +30,9 @@ public class SlotMachine {
 		BTCommunicator btStack = new BTCommunicator(false, 50, true);
 		boolean stackStarted = btStack.StartCommunicationsCycle();
 		
+		CardReader cardReader = new CardReader(true, true, 500);
+		cardReader.StartReaderProcedure();
+		
 		btStack.CreateMessageQueue1("brick1");
 		btStack.CreateMessageQueue2("brick2");		
 		int messageCounter = 0;
@@ -37,8 +40,8 @@ public class SlotMachine {
 		EV3IRSensor irSensor = new EV3IRSensor(SensorPort.S2);
 		int chan1, chan2, chan3, chan4;
 		
-		File coinSoundFile = new File("CoinSound1.wav");
-		int soundReturn = 0;		
+		//File coinSoundFile = new File("CoinSound1.wav");
+		//int soundReturn = 0;		
 		
 		RCXMotor playLight1 = new RCXMotor(MotorPort.A);
 		RCXMotor playLight2 = new RCXMotor(MotorPort.B);
@@ -52,6 +55,7 @@ public class SlotMachine {
 			
 			if (buttonId == Button.ID_ESCAPE) {
 				btStack.StopCommunicationsCycle();
+				cardReader.StopReaderProcedure();
 				break;
 			}
 			
@@ -103,8 +107,6 @@ public class SlotMachine {
 				OpCodeMessage opcm = btStack.receivingQueue.remove();
 				
 				if (opcm.opcode == 50) {
-					//soundReturn = Sound.playSample(coinSoundFile, 90);
-					//System.out.println("SR:" + soundReturn);
 					System.out.println("Coin Collected");
 				}
 			}
@@ -161,6 +163,7 @@ public class SlotMachine {
 				
 				if (chan4 == 4) {
 					btStack.StopCommunicationsCycle();
+					cardReader.StopReaderProcedure();
 					break;
 				}
 				
