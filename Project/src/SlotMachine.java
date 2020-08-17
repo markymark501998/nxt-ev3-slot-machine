@@ -36,7 +36,7 @@ public class SlotMachine {
 
         int holdButtonDelay = 225;
         boolean printMotorCommands = false;  
-        int motorSpeed = 350;   
+        int motorSpeed = 50;   
 
         //Local Variables
         //--------------------------------------------------

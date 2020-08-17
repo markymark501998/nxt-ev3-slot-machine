@@ -30,7 +30,7 @@ public class SlotMachine {
 		BTCommunicator btStack = new BTCommunicator(false, 50, true);
 		boolean stackStarted = btStack.StartCommunicationsCycle();
 		
-		CardReader cardReader = new CardReader(true, true, 500);
+		CardReader cardReader = new CardReader(false, true, 500);
 		cardReader.StartReaderProcedure();
 		
 		btStack.CreateMessageQueue1("brick1");
@@ -93,10 +93,16 @@ public class SlotMachine {
 			}
 			
 			if (buttonId == Button.ID_UP) {
+				/*
 				if (btStack.killComms) {
 					System.out.println("Starting Comms");
 					btStack.StartCommunicationsCycle();
 				}
+				*/
+				
+				System.out.println("All -> 45 Deg");
+				btStack.CreateMessageQueue2("!A:45,B:45,C:45");
+				btStack.CreateMessageQueue1("!A:45,B:45,C:0");
 				
 				while (Button.UP.isDown()) {
 					
