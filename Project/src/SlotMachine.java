@@ -36,7 +36,7 @@ public class SlotMachine {
 
         int holdButtonDelay = 225;
         boolean printMotorCommands = false;  
-        int motorSpeed = 50;   
+        int motorSpeed = 100;   
 
         //Local Variables
         //--------------------------------------------------
@@ -47,9 +47,9 @@ public class SlotMachine {
         String motorCommand = "";
         String[] commands;
 
-        int aDegrees;
-        int bDegrees;
-        int cDegrees;
+        int aDegrees = 0;
+        int bDegrees = 0;
+        int cDegrees = 0;
 
         NXTRegulatedMotor MotorA = null;
         NXTRegulatedMotor MotorB = null;
@@ -124,6 +124,12 @@ public class SlotMachine {
                     MotorA = new NXTRegulatedMotor(MotorPort.A);
                     MotorB = new NXTRegulatedMotor(MotorPort.B);
 
+                    MotorA.resetTachoCount();
+                    MotorB.resetTachoCount();
+
+                    MotorA.setSpeed(motorSpeed);
+                    MotorB.setSpeed(motorSpeed);
+
                     touchSensor1 = new TouchSensor(SensorPort.S1);
                     touchSensor2 = new TouchSensor(SensorPort.S2);
 
@@ -136,6 +142,14 @@ public class SlotMachine {
                     MotorA = new NXTRegulatedMotor(MotorPort.A);
                     MotorB = new NXTRegulatedMotor(MotorPort.B);
                     MotorC = new NXTRegulatedMotor(MotorPort.C);
+
+                    MotorA.resetTachoCount();
+                    MotorB.resetTachoCount();
+                    MotorC.resetTachoCount();
+
+                    MotorA.setSpeed(motorSpeed);
+                    MotorB.setSpeed(motorSpeed);
+                    MotorC.setSpeed(motorSpeed);
 
                     touchSensor1 = new TouchSensor(SensorPort.S1);
                     touchSensor2 = new TouchSensor(SensorPort.S2);
@@ -161,9 +175,16 @@ public class SlotMachine {
                                 System.out.println(commands[2].substring(2));
                             }
 
-                            aDegrees = Integer.parseInt(commands[0].substring(2));
-                            bDegrees = Integer.parseInt(commands[1].substring(2));
+                            aDegrees += Integer.parseInt(commands[0].substring(2));
+                            bDegrees += Integer.parseInt(commands[1].substring(2));
+
+                            MotorA.rotateTo(aDegrees, true);
+                            MotorB.rotateTo(bDegrees, true);
+
+                            MotorA.waitComplete();
+                            MotorB.waitComplete();
                             
+                            /*
                             MotorA.setSpeed(motorSpeed);
                             MotorA.resetTachoCount();
                             MotorB.setSpeed(motorSpeed);
@@ -177,6 +198,7 @@ public class SlotMachine {
 
                             MotorA.flt(true);
                             MotorB.flt(true);
+                            */
         
                             break;
         
@@ -196,10 +218,19 @@ public class SlotMachine {
                                 System.out.println(commands[2].substring(2));
                             }
 
-                            aDegrees = Integer.parseInt(commands[0].substring(2));
-                            bDegrees = Integer.parseInt(commands[1].substring(2));
-                            cDegrees = Integer.parseInt(commands[2].substring(2));
+                            aDegrees += Integer.parseInt(commands[0].substring(2));
+                            bDegrees += Integer.parseInt(commands[1].substring(2));
+                            cDegrees += Integer.parseInt(commands[2].substring(2));
 
+                            MotorA.rotateTo(aDegrees, true);
+                            MotorB.rotateTo(bDegrees, true);
+                            MotorC.rotateTo(cDegrees, true);
+
+                            MotorA.waitComplete();
+                            MotorB.waitComplete();
+                            MotorC.waitComplete();
+
+                            /*
                             MotorA.setSpeed(motorSpeed);
                             MotorA.resetTachoCount();
                             MotorB.setSpeed(motorSpeed);
@@ -218,6 +249,7 @@ public class SlotMachine {
                             MotorA.flt(true);
                             MotorB.flt(true);
                             MotorC.flt(true);
+                            */
         
                             break;
         

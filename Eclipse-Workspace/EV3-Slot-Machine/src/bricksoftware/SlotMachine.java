@@ -24,6 +24,8 @@ public class SlotMachine {
 		//---------------------------------------------------------------------------
 		int motorSpeed = 250;  
         
+		// 1 - 5		
+		int configMotor = 1;
         
         //Local Variables
         //---------------------------------------------------------------------------
@@ -152,6 +154,26 @@ public class SlotMachine {
 				}
 				
 				System.out.println("2:" + chan2);
+				
+				if (chan2 == 1) {
+					btStack.CreateMessageQueue2("!A:45,B:45,C:45");
+					btStack.CreateMessageQueue1("!A:45,B:45,C:0");
+				}
+				
+				if (chan2 == 2) {
+					btStack.CreateMessageQueue2("!A:90,B:90,C:90");
+					btStack.CreateMessageQueue1("!A:90,B:90,C:0");
+				}
+				
+				if (chan2 == 3) {
+					btStack.CreateMessageQueue2("!A:45,B:45,C:45");
+					btStack.CreateMessageQueue1("!A:90,B:90,C:0");
+				}
+				
+				if (chan2 == 4) {
+					btStack.CreateMessageQueue2("!A:360,B:360,C:360");
+					btStack.CreateMessageQueue1("!A:360,B:360,C:0");
+				}
 			}
 			
 			if (chan3 != 0) {
@@ -160,6 +182,23 @@ public class SlotMachine {
 				}
 				
 				System.out.println("3:" + chan3);
+				
+				if (chan3 == 1) {
+					ConfigMotor(1, 0, configMotor, btStack);
+				}
+				
+				if (chan3 == 2) {
+					ConfigMotor(-1, 0, configMotor, btStack);
+				}
+				
+				if (chan3 == 3) {
+					configMotor = ConfigMotor(0, 1, configMotor, btStack);
+					System.out.println("Cycle: " + configMotor);
+				}
+				
+				if (chan3 == 4) {
+					
+				}
 			}
 			
 			if (chan4 != 0) {
@@ -204,5 +243,59 @@ public class SlotMachine {
 			dispenser.flt();
 			Delay.msDelay(25);
 		}
+	}
+	
+	public static int ConfigMotor (int direction, int cycle, int configMotor, BTCommunicator tempStack) {
+		if (cycle > 0 && configMotor == 5) {
+			configMotor = 1;
+		} else {
+			configMotor++;
+		}
+		
+		if (direction != 0) {
+			switch (configMotor) {
+				case 1:
+					if (direction > 0) {
+						tempStack.CreateMessageQueue2("!A:45,B:0,C:0");
+					} else {
+						tempStack.CreateMessageQueue2("!A:-45,B:0,C:0");
+					}					
+					break;
+					
+				case 2: 
+					if (direction > 0) {
+						tempStack.CreateMessageQueue2("!A:0,B:1,C:0");
+					} else {
+						tempStack.CreateMessageQueue2("!A:0,B:-1,C:0");
+					}			
+					break;
+									
+				case 3: 
+					if (direction > 0) {
+						tempStack.CreateMessageQueue2("!A:0,B:0,C:1");
+					} else {
+						tempStack.CreateMessageQueue2("!A:0,B:0,C:-1");
+					}
+					break;
+					
+				case 4: 
+					if (direction > 0) {
+						tempStack.CreateMessageQueue1("!A:1,B:0,C:0");
+					} else {
+						tempStack.CreateMessageQueue1("!A:-1,B:0,C:0");
+					}
+					break;
+					
+				case 5: 
+					if (direction > 0) {
+						tempStack.CreateMessageQueue1("!A:0,B:1,C:0");
+					} else {
+						tempStack.CreateMessageQueue1("!A:0,B:-1,C:0");
+					}
+					break;
+			}
+		}
+		
+		return configMotor;
 	}
 }
